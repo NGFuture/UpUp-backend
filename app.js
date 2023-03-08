@@ -8,6 +8,31 @@ const Question = require('./models/Question');
 const PORT = process.env.PORT || 3010;
 const app = express();
 app.use(cors());
+app.use(express.json());
+app.post('/results', async (req, res) => {
+    const {quizId, userChoices} = req.body;
+    const quiz = await Quiz.findById(quizId);
+    const questions = await Question.find({
+        _id: {
+            $in: Object.keys(userChoices)
+        }
+    });
+    let correctAnswers = 0;
+    for (const question of questions) {
+        if (question.answer === userChoices[question._id]) {
+            correctAnswers += 1;
+        };
+    };
+    const percentage = Math.round(correctAnswers * 100 / questions.length);
+    console.log(quiz);
+    console.log(questions);
+    res.json({
+        item: {
+            _id: 1,
+            percentage: percentage,
+        }
+    })
+});
 app.get('/quizzes', async (req, res) => {
     const quizzes = await Quiz.find();
     res.json(
