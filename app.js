@@ -4,6 +4,7 @@ const cors = require('cors');
 const express = require('express');
 const Quiz = require('./models/Quiz');
 const Question = require('./models/Question');
+const User = require('./models/User');
 
 const PORT = process.env.PORT || 3010;
 const app = express();
@@ -41,6 +42,7 @@ app.get('/quizzes', async (req, res) => {
         }
     );
 });
+
 // Endpoint for 1 quiz
 app.get('/quizzes/:id', async(req, res) => {
     const quiz = await Quiz.findById(req.params.id);
@@ -76,6 +78,16 @@ app.get('/questions/:id', async(req, res) => {
         }
     );
 });
+
+app.post('/users', async(req, res) => {
+    const user = new User({
+        id: Date.now(),
+    });
+    await user.save();
+    res.json({
+        item: user,
+    })
+})
 
 app.listen(PORT, () => {
     console.log(`started on http://localhost:${PORT}`);
