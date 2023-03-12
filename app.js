@@ -5,12 +5,26 @@ const express = require('express');
 const Quiz = require('./models/Quiz');
 const Question = require('./models/Question');
 const User = require('./models/User');
+const Result = require('./models/Result');
 
 const PORT = process.env.PORT || 3010;
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.post('/results', async (req, res) => {
+app.use(async (req, res, next) => {
+    if (req.headers.authuserid) {
+        const user = await User.findOne({id: req.headers.authuserid})
+        req.user = user;
+    };
+    next();
+});
+const privateRoute = (req, res, next) => {
+    if (!req.user) {
+        return res.status(403).json({message: 'Access denied'});
+    }
+    next();
+};
+app.post('/results', privateRoute, async (req, res) => {
     const {quizId, userChoices} = req.body;
     const quiz = await Quiz.findById(quizId);
     const questions = await Question.find({
@@ -19,19 +33,26 @@ app.post('/results', async (req, res) => {
         }
     });
     let correctAnswers = 0;
+    const results = [];
     for (const question of questions) {
+        results.push({
+            question_id: question._id,
+            choice: userChoices[question._id],
+        });
         if (question.answer === userChoices[question._id]) {
             correctAnswers += 1;
         };
     };
     const percentage = Math.round(correctAnswers * 100 / questions.length);
-    console.log(quiz);
-    console.log(questions);
+    const result = new Result({
+        quiz_id: quizId,
+        user_id: req.user._id,
+        results: results,
+        results_percentage: percentage,
+    });
+    await result.save();
     res.json({
-        item: {
-            _id: 1,
-            percentage: percentage,
-        }
+        item: result,
     })
 });
 app.get('/quizzes', async (req, res) => {
