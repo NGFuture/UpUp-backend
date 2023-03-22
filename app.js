@@ -75,18 +75,24 @@ app.get('/quizzes/:id', async(req, res) => {
 });
 
 app.get('/questions', async (req, res) => {
-    const {quizId} = req.query;
+    const {quizId, skip=0, limit=5} = req.query;
     const criteria = {};
+    let count = 0;
     if (quizId) {
         const quiz = await Quiz.findById(quizId);
         criteria._id = {
-            $in: quiz.questions
+            $in: quiz.questions.slice(+skip, +skip+limit)
         };
+        count = quiz.questions.length;
     };
     const questions = await Question.find(criteria);
+    if (!count) {
+        count = await Question.countDocuments(criteria);
+    };
     res.json(
         {
             items: questions,
+            count: count,
         }
     );
 });
