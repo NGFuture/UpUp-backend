@@ -13,19 +13,19 @@ app.use(cors());
 app.use(express.json());
 app.use(async (req, res, next) => {
     if (req.headers.authuserid) {
-        const user = await User.findOne({id: req.headers.authuserid})
+        const user = await User.findOne({ id: req.headers.authuserid })
         req.user = user;
     };
     next();
 });
 const privateRoute = (req, res, next) => {
     if (!req.user) {
-        return res.status(403).json({message: 'Access denied'});
+        return res.status(403).json({ message: 'Access denied' });
     }
     next();
 };
 app.post('/results', privateRoute, async (req, res) => {
-    const {quizId, userChoices} = req.body;
+    const { quizId, userChoices } = req.body;
     const quiz = await Quiz.findById(quizId);
     const questions = await Question.find({
         _id: {
@@ -65,7 +65,7 @@ app.get('/quizzes', async (req, res) => {
 });
 
 // Endpoint for 1 quiz
-app.get('/quizzes/:id', async(req, res) => {
+app.get('/quizzes/:id', async (req, res) => {
     const quiz = await Quiz.findById(req.params.id);
     res.json(
         {
@@ -75,20 +75,16 @@ app.get('/quizzes/:id', async(req, res) => {
 });
 
 app.get('/questions', async (req, res) => {
-    const {quizId, skip=0, limit=5} = req.query;
+    const { quizId, skip = 0, limit = 5 } = req.query;
     const criteria = {};
-    let count = 0;
     if (quizId) {
         const quiz = await Quiz.findById(quizId);
         criteria._id = {
-            $in: quiz.questions.slice(+skip, +skip+limit)
+            $in: quiz.questions
         };
-        count = quiz.questions.length;
     };
-    const questions = await Question.find(criteria);
-    if (!count) {
-        count = await Question.countDocuments(criteria);
-    };
+    const questions = await Question.find(criteria).skip(+skip).limit(+limit);
+    const count = await Question.countDocuments(criteria);
     res.json(
         {
             items: questions,
@@ -97,7 +93,7 @@ app.get('/questions', async (req, res) => {
     );
 });
 // Endpoint for 1 question
-app.get('/questions/:id', async(req, res) => {
+app.get('/questions/:id', async (req, res) => {
     const question = await Question.findById(req.params.id);
     res.json(
         {
@@ -106,7 +102,7 @@ app.get('/questions/:id', async(req, res) => {
     );
 });
 
-app.post('/users', async(req, res) => {
+app.post('/users', async (req, res) => {
     const user = new User({
         id: Date.now(),
     });
