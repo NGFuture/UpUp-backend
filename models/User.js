@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 
 const userSchema = new Schema({
     id: String,
+    quiz_set_id: Schema.Types.ObjectId,
 }, {
     timestamps: true
 });

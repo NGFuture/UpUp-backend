@@ -6,6 +6,7 @@ const Quiz = require('./models/Quiz');
 const Question = require('./models/Question');
 const User = require('./models/User');
 const Result = require('./models/Result');
+const QuizSet = require('./models/QuizSet');
 
 const PORT = process.env.PORT || 3010;
 const app = express();
@@ -103,12 +104,28 @@ app.get('/questions/:id', async (req, res) => {
 });
 
 app.post('/users', async (req, res) => {
+    //currently only 1 set of quizzes is assigned to all users
+    const quizSet = await QuizSet.findOne();
     const user = new User({
         id: Date.now(),
+        quiz_set_id: quizSet._id,
     });
     await user.save();
     res.json({
         item: user,
+    })
+})
+app.get('/quiz-sets/my', privateRoute, async (req, res) => {
+    const quizSet = await QuizSet.findById(req.user.quiz_set_id);
+    const results = await Result.find({
+        user_id: req.user_id,
+        quiz_id: {
+            $in: quizSet.quiz_ids,
+        }
+    })
+    res.json({
+        item: quizSet,
+        results: results,
     })
 })
 
