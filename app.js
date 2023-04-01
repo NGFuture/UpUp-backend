@@ -118,14 +118,21 @@ app.post('/users', async (req, res) => {
 app.get('/quiz-sets/my', privateRoute, async (req, res) => {
     const quizSet = await QuizSet.findById(req.user.quiz_set_id);
     const results = await Result.find({
-        user_id: req.user_id,
+        user_id: req.user._id,
         quiz_id: {
             $in: quizSet.quiz_ids,
+        }
+    })
+    const finishedQuizIds = results.map((result)=>result.quiz_id);
+    const finishedQuizzes =await Quiz.find({
+        _id: {
+            $in: finishedQuizIds,
         }
     })
     res.json({
         item: quizSet,
         results: results,
+        finishedQuizzes,
     })
 })
 
