@@ -7,6 +7,7 @@ const Question = require('./models/Question');
 const User = require('./models/User');
 const Result = require('./models/Result');
 const QuizSet = require('./models/QuizSet');
+const { INPUT_TYPE_MULTIPLE_SELECT, INPUT_TYPE_SINGLE_ANSWER } = require('./config/quiz');
 
 const PORT = process.env.PORT || 3010;
 const app = express();
@@ -27,7 +28,7 @@ const privateRoute = (req, res, next) => {
 };
 app.post('/results', privateRoute, async (req, res) => {
     const { quizId, userChoices } = req.body;
-    const quiz = await Quiz.findById(quizId);
+    // const quiz = await Quiz.findById(quizId);
     const questions = await Question.find({
         _id: {
             $in: Object.keys(userChoices)
@@ -40,8 +41,14 @@ app.post('/results', privateRoute, async (req, res) => {
             question_id: question._id,
             choice: userChoices[question._id],
         });
-        if (question.answer === userChoices[question._id]) {
-            correctAnswers += 1;
+        if (question.type === INPUT_TYPE_SINGLE_ANSWER) {
+            if (question.answer === userChoices[question._id]) {
+                correctAnswers += 1;
+            }
+        } else if (question.type === INPUT_TYPE_MULTIPLE_SELECT) {
+            if (question.answer.sort().join() === userChoices[question._id].sort().join()) {
+                correctAnswers += 1;
+            }
         };
     };
     const percentage = Math.round(correctAnswers * 100 / questions.length);
