@@ -12,6 +12,7 @@ const { INPUT_TYPE_MULTIPLE_SELECT, INPUT_TYPE_SINGLE_ANSWER } = require('./conf
 const PORT = process.env.PORT || 3010;
 const app = express();
 app.use(cors());
+app.use(express.static("public"));
 app.use(express.json());
 app.use(async (req, res, next) => {
     if (req.headers.authuserid) {
